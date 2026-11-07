@@ -1,0 +1,135 @@
+// ─────────────────────────────────────────────────────────────
+// Stock Tracker – Schéma Prisma (PostgreSQL)
+// Basé sur le cahier des charges V1 (resumeCC.md)
+// ─────────────────────────────────────────────────────────────
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────────────────────
+// ÉNUMÉRATIONS
+// ─────────────────────────────────────────────────────────────
+
+/// Type de mouvement de stock (table append-only)
+enum TypeMouvement {
+  ENTREE
+  SORTIE
+  AJUSTEMENT
+}
+
+/// Rôles utilisateurs (RG : droits par rôle)
+enum Role {
+  ADMIN
+  GESTIONNAIRE
+  OPERATEUR
+  LECTEUR
+}
+
+// ─────────────────────────────────────────────────────────────
+// CATÉGORIES — arborescence auto-référencée (RF-01, RF-04, RF-05)
+// parent_id NULL = catégorie racine (ex : "zezika")
+// parent_id renseigné = sous-catégorie (ex : "soleve" → parent "zezika")
+// Profondeur illimitée grâce à la relation récursive.
+// ─────────────────────────────────────────────────────────────
+
+model Categorie {
+  id        String   @id @default(uuid())
+  nom       String
+  actif     Boolean  @default(true) // RF-03 : désactivation logique, historique conservé
+  creeLe    DateTime @default(now()) @map("cree_le")
+  modifieLe DateTime @updatedAt @map("modifie_le")
+
+  // Auto-référence pour l'arborescence libre (catégorie → sous-catégorie → …)
+  parentId       String?      @map("parent_id")
+  parent         Categorie?   @relation("CategorieArborescence", fields: [parentId], references: [id])
+  sousCategories Categorie[]  @relation("CategorieArborescence")
+
+  // Produits rattachés à cette (sous-)catégorie
+  produits Produit[]
+
+  @@index([parentId])
+  @@map("categories")
+}
+
+// ─────────────────────────────────────────────────────────────
+// PRODUITS — article réellement stocké (RF-02, RF-03, RF-05, RG-06)
+// ─────────────────────────────────────────────────────────────
+
+model Produit {
+  id          String   @id @default(uuid())
+  nom         String
+  unite       String   @default("pièce") // RG-06 : unité configurable (pièce, kg, carton…)
+  actif       Boolean  @default(true)     // RF-03 : désactivé ≠ supprimé
+  creeLe      DateTime @default(now()) @map("cree_le")
+  modifieLe   DateTime @updatedAt @map("modifie_le")
+
+  // Rattachement obligatoire à une catégorie (ou sous-catégorie)
+  categorieId String     @map("categorie_id")
+  categorie   Categorie  @relation(fields: [categorieId], references: [id])
+
+  // Historique des mouvements du produit
+  mouvements Mouvement[]
+
+  @@index([categorieId])
+  @@map("produits")
+}
+
+// ─────────────────────────────────────────────────────────────
+// MOUVEMENTS — table APPEND-ONLY (RF-06 → RF-11, RG-01 → RG-05)
+//
+// Règles clés :
+//   • Aucune suppression ni modification directe (RF-11).
+//   • Une erreur se corrige par un mouvement d'AJUSTEMENT tracé.
+//   • Stock = Σ ENTREE − Σ SORTIE ± Σ AJUSTEMENT  (RG-01).
+//   • La quantité est toujours strictement positive (RF-10) ;
+//     le type (ENTREE/SORTIE) détermine le signe.
+//   • Les dates respectent le fuseau UTC+3 Antananarivo (RG-04).
+// ─────────────────────────────────────────────────────────────
+
+model Mouvement {
+  id             String        @id @default(uuid())
+  type           TypeMouvement // ENTREE | SORTIE | AJUSTEMENT
+  quantite       Decimal       @db.Decimal(12, 3) // Précision décimale pour kg, litres, etc.
+  dateMouvement  DateTime      @map("date_mouvement") // Date effective du mouvement (RG-04 : UTC+3)
+  note           String?       // Note facultative (RF-06, RF-07)
+  creeLe         DateTime      @default(now()) @map("cree_le") // Horodatage d'insertion (traçabilité)
+
+  // Produit concerné
+  produitId String  @map("produit_id")
+  produit   Produit @relation(fields: [produitId], references: [id])
+
+  // Utilisateur ayant saisi le mouvement (RF-22)
+  utilisateurId String      @map("utilisateur_id")
+  utilisateur   Utilisateur @relation(fields: [utilisateurId], references: [id])
+
+  // Index composite pour agrégations rapides par produit et date (section 7 du CC)
+  @@index([produitId, dateMouvement])
+  @@index([utilisateurId])
+  @@map("mouvements")
+}
+
+// ─────────────────────────────────────────────────────────────
+// UTILISATEURS — gestion simple des comptes et rôles (RF-21, RF-22)
+// ─────────────────────────────────────────────────────────────
+
+model Utilisateur {
+  id              String   @id @default(uuid())
+  nom             String
+  identifiant     String   @unique // Login unique
+  motDePasseHache String   @map("mot_de_passe_hache") // Haché avec bcrypt/argon2
+  role            Role     @default(OPERATEUR)
+  actif           Boolean  @default(true)
+  creeLe          DateTime @default(now()) @map("cree_le")
+  modifieLe       DateTime @updatedAt @map("modifie_le")
+
+  // Mouvements saisis par cet utilisateur
+  mouvements Mouvement[]
+
+  @@map("utilisateurs")
+}
