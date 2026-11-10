@@ -31,7 +31,24 @@ export async function loginAction(
     await createSession(user);
   } catch (error) {
     console.error("[loginAction] Erreur :", error);
-    return { error: "Erreur serveur lors de la connexion. Veuillez réessayer." };
+
+    // Diagnostic précis si la variable DATABASE_URL est absente en production
+    if (!process.env.DATABASE_URL) {
+      return {
+        error: "Variable d'environnement DATABASE_URL manquante sur Vercel. Rendez-vous dans Vercel > Settings > Environment Variables.",
+      };
+    }
+
+    const message = error instanceof Error ? error.message : String(error);
+    if (message.includes("Can't reach database server") || message.includes("P1001")) {
+      return {
+        error: "Impossible de joindre la base de données Supabase. Utilisez l'URL du Connection Pooler (port 6543) dans les variables Vercel.",
+      };
+    }
+
+    return {
+      error: `Erreur serveur : ${message.slice(0, 100)}`,
+    };
   }
 
   // Redirection vers le tableau de bord
