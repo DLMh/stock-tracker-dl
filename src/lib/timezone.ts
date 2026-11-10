@@ -24,12 +24,50 @@ export function toLocalDateString(date: Date): string {
 }
 
 /**
- * Convertit une chaîne YYYY-MM-DD saisie par l'utilisateur en objet Date
- * représentant minuit dans le fuseau d'Antananarivo, stocké en UTC dans la BDD.
+ * Retourne la date et l'heure courante au format YYYY-MM-DDTHH:mm
+ * dans le fuseau horaire d'Antananarivo (UTC+3) pour les champs datetime-local.
+ */
+export function nowDateTimeString(): string {
+  const local = new Date(
+    new Date().toLocaleString("en-US", { timeZone: TZ_ANTANANARIVO })
+  );
+  const year = local.getFullYear();
+  const month = String(local.getMonth() + 1).padStart(2, "0");
+  const day = String(local.getDate()).padStart(2, "0");
+  const hours = String(local.getHours()).padStart(2, "0");
+  const minutes = String(local.getMinutes()).padStart(2, "0");
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
+/**
+ * Convertit une chaîne YYYY-MM-DD ou YYYY-MM-DDTHH:mm saisie par l'utilisateur
+ * en objet Date dans le fuseau d'Antananarivo (UTC+3), stocké en UTC dans la BDD.
  */
 export function localDateToUTC(dateStr: string): Date {
-  // On interprète la date comme minuit heure locale Antananarivo
-  return new Date(`${dateStr}T00:00:00+03:00`);
+  // Si le format contient l'heure (ex: "2026-11-10T15:30" ou "2026-11-10T15:30:00")
+  if (dateStr.includes("T")) {
+    const parts = dateStr.split("T");
+    const d = parts[0];
+    let t = parts[1];
+    if (t.length === 5) t = `${t}:00`;
+    return new Date(`${d}T${t}+03:00`);
+  }
+
+  // Si c'est juste "YYYY-MM-DD"
+  const today = todayString();
+  if (dateStr === today) {
+    // Si la date choisie est aujourd'hui, on associe automatiquement l'heure courante d'Antananarivo
+    const localNow = new Date(
+      new Date().toLocaleString("en-US", { timeZone: TZ_ANTANANARIVO })
+    );
+    const hours = String(localNow.getHours()).padStart(2, "0");
+    const minutes = String(localNow.getMinutes()).padStart(2, "0");
+    const seconds = String(localNow.getSeconds()).padStart(2, "0");
+    return new Date(`${dateStr}T${hours}:${minutes}:${seconds}+03:00`);
+  }
+
+  // Pour une date passée sans heure spécifiée, on positionne à 12:00:00 (midi)
+  return new Date(`${dateStr}T12:00:00+03:00`);
 }
 
 /**

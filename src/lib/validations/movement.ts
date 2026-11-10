@@ -25,10 +25,12 @@ export const mouvementSchema = z.object({
   produitId: z.string().uuid({ message: "Produit invalide." }),
   type: TypeMouvementEnum,
   quantite: quantitePositive,
-  /** RF-09 : date par défaut = aujourd'hui, modifiable (saisie rétroactive) */
+  /** RF-09 : date par défaut = aujourd'hui + heure courante, modifiable (saisie rétroactive) */
   dateMouvement: z
     .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, { message: "Format de date invalide (YYYY-MM-DD)." }),
+    .regex(/^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}(:\d{2})?)?$/, {
+      message: "Format de date invalide (YYYY-MM-DD ou YYYY-MM-DDTHH:mm).",
+    }),
   note: z.string().max(500, { message: "La note ne doit pas dépasser 500 caractères." }).optional(),
 });
 

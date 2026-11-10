@@ -17,7 +17,7 @@
 // ─────────────────────────────────────────────────────────────
 
 import { useState, useMemo, useTransition, type FormEvent } from "react";
-import { todayString } from "@/lib/timezone";
+import { nowDateTimeString } from "@/lib/timezone";
 import { mouvementSchema } from "@/lib/validations/movement";
 
 // ─── Types ───────────────────────────────────────────────────
@@ -65,7 +65,7 @@ export function MouvementForm({
   const [recherche, setRecherche] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
   const [quantite, setQuantite] = useState("");
-  const [date, setDate] = useState(todayString());
+  const [date, setDate] = useState(nowDateTimeString());
   const [note, setNote] = useState("");
   const [stockActuel, setStockActuel] = useState<number | null>(null);
   const [erreurs, setErreurs] = useState<Record<string, string>>({});
@@ -139,7 +139,7 @@ export function MouvementForm({
         // Réinitialisation après succès
         setQuantite("");
         setNote("");
-        setDate(todayString());
+        setDate(nowDateTimeString());
         setSucces(true);
         setTimeout(() => setSucces(false), 4000);
       } catch (err: unknown) {
@@ -387,14 +387,14 @@ export function MouvementForm({
           RF-09 : date par défaut = aujourd'hui | RG-04 : UTC+3
       ══════════════════════════════════════════════════ */}
       <div className="flex flex-col sm:flex-row gap-4">
-        {/* Date */}
+        {/* Date et heure */}
         <div className="flex flex-col gap-1.5 flex-1">
           <label htmlFor="date" className="text-sm font-medium text-gray-700">
-            Date <span className="text-red-500">*</span>
+            Date et heure <span className="text-red-500">*</span>
           </label>
           <input
             id="date"
-            type="date"
+            type="datetime-local"
             value={date}
             onChange={(e) => setDate(e.target.value)}
             className={cls(
