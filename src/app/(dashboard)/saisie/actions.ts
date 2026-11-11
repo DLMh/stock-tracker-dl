@@ -9,6 +9,7 @@
 // ─────────────────────────────────────────────────────────────
 
 import { localDateToUTC } from "@/lib/timezone";
+import { revalidatePath } from "next/cache";
 import {
   enregistrerMouvement,
   calculerStockActuel,
@@ -37,6 +38,11 @@ export async function enregistrerMouvementAction(
       note: values.note,
       utilisateurId: user.id,
     });
+
+    revalidatePath("/");
+    revalidatePath("/historique");
+    revalidatePath("/catalogue");
+    revalidatePath("/saisie");
 
     return { success: true };
   } catch (err) {

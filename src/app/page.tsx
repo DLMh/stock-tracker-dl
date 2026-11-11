@@ -6,7 +6,7 @@
 import { getDashboardDataAction } from "./actions";
 import { DashboardClient } from "./DashboardClient";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 10;
 
 export const metadata = {
   title: "Tableau de bord – Suivi de stock",

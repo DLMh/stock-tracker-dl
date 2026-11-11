@@ -7,6 +7,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { triggerGlobalLoader } from "@/components/layout/NavigationProgress";
 
 export function BottomNav() {
   const pathname = usePathname();
@@ -90,7 +91,16 @@ export function BottomNav() {
                 href={item.href}
                 prefetch={true}
                 onClick={() => {
-                  if (pathname !== item.href) setNavigatingTo(item.href);
+                  if (pathname !== item.href) {
+                    setNavigatingTo(item.href);
+                    triggerGlobalLoader();
+                  }
+                }}
+                onTouchStart={() => {
+                  if (pathname !== item.href) {
+                    setNavigatingTo(item.href);
+                    triggerGlobalLoader();
+                  }
                 }}
                 className="flex flex-col items-center justify-center text-xs font-semibold text-gray-700 active:opacity-80"
               >
@@ -119,7 +129,16 @@ export function BottomNav() {
               href={item.href}
               prefetch={true}
               onClick={() => {
-                if (pathname !== item.href) setNavigatingTo(item.href);
+                if (pathname !== item.href) {
+                  setNavigatingTo(item.href);
+                  triggerGlobalLoader();
+                }
+              }}
+              onTouchStart={() => {
+                if (pathname !== item.href) {
+                  setNavigatingTo(item.href);
+                  triggerGlobalLoader();
+                }
               }}
               className={`flex flex-col items-center justify-center py-1 transition-colors ${
                 isNavigating

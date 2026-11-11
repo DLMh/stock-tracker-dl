@@ -10,6 +10,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { getSessionAction, logoutAction } from "@/app/login/actions";
 import { type SessionUser } from "@/lib/auth";
+import { triggerGlobalLoader } from "@/components/layout/NavigationProgress";
 
 export function Navbar() {
   const pathname = usePathname();
@@ -78,7 +79,10 @@ export function Navbar() {
                 href={link.href}
                 prefetch={true}
                 onClick={() => {
-                  if (pathname !== link.href) setNavigatingTo(link.href);
+                  if (pathname !== link.href) {
+                    setNavigatingTo(link.href);
+                    triggerGlobalLoader();
+                  }
                 }}
                 className={`px-3 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-2 ${
                   isNavigating
