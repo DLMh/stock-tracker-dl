@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Navbar } from "@/components/layout/Navbar";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { Footer } from "@/components/layout/Footer";
+import { NavigationProgress } from "@/components/layout/NavigationProgress";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -17,6 +19,9 @@ export default function RootLayout({
   return (
     <html lang="fr" className="h-full antialiased">
       <body className="min-h-full flex flex-col bg-gray-50 text-gray-900 pb-20 md:pb-0">
+        <Suspense fallback={null}>
+          <NavigationProgress />
+        </Suspense>
         <Navbar />
         <div className="flex-1">{children}</div>
         <Footer />

@@ -14,11 +14,17 @@ import { type SessionUser } from "@/lib/auth";
 export function Navbar() {
   const pathname = usePathname();
   const [user, setUser] = useState<SessionUser | null>(null);
+  const [navigatingTo, setNavigatingTo] = useState<string | null>(null);
 
   // Charger la session une seule fois au montage (évite les requêtes serveur à chaque clic d'onglet)
   useEffect(() => {
     getSessionAction().then(setUser);
   }, []);
+
+  // Réinitialiser l'indicateur de navigation dès que la page a changé
+  useEffect(() => {
+    setNavigatingTo(null);
+  }, [pathname]);
 
   const navLinks = [
     { href: "/", label: "Tableau de bord" },
@@ -31,7 +37,14 @@ export function Navbar() {
     <header className="sticky top-0 z-40 w-full border-b border-gray-200 bg-white/95 backdrop-blur-md">
       <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between gap-3">
         {/* Logo & Marque */}
-        <Link href="/" prefetch={true} className="flex items-center gap-2.5 group shrink-0">
+        <Link
+          href="/"
+          prefetch={true}
+          onClick={() => {
+            if (pathname !== "/") setNavigatingTo("/");
+          }}
+          className="flex items-center gap-2.5 group shrink-0"
+        >
           <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-indigo-100 group-hover:scale-105 transition-transform">
             <svg
               className="w-5 h-5"
@@ -53,22 +66,35 @@ export function Navbar() {
           </div>
         </Link>
 
-        {/* Liens Desktop */}
+        {/* Liens Desktop avec indicateur de chargement immédiat au clic */}
         <nav className="hidden md:flex items-center gap-1">
           {navLinks.map((link) => {
             const isActive = pathname === link.href;
+            const isNavigating = navigatingTo === link.href;
+
             return (
               <Link
                 key={link.href}
                 href={link.href}
                 prefetch={true}
-                className={`px-3 py-2 rounded-xl text-sm font-medium transition-all ${
-                  isActive
+                onClick={() => {
+                  if (pathname !== link.href) setNavigatingTo(link.href);
+                }}
+                className={`px-3 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-2 ${
+                  isNavigating
+                    ? "bg-indigo-100/70 text-indigo-800 ring-2 ring-indigo-400/40"
+                    : isActive
                     ? "bg-indigo-50 text-indigo-700 font-semibold"
                     : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
                 }`}
               >
-                {link.label}
+                {isNavigating && (
+                  <svg className="w-3.5 h-3.5 animate-spin text-indigo-600" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                  </svg>
+                )}
+                <span>{link.label}</span>
               </Link>
             );
           })}
