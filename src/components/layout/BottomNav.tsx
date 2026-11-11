@@ -96,12 +96,6 @@ export function BottomNav() {
                     triggerGlobalLoader();
                   }
                 }}
-                onTouchStart={() => {
-                  if (pathname !== item.href) {
-                    setNavigatingTo(item.href);
-                    triggerGlobalLoader();
-                  }
-                }}
                 className="flex flex-col items-center justify-center text-xs font-semibold text-gray-700 active:opacity-80"
               >
                 <div className={`w-11 h-11 -mt-4 rounded-full bg-gradient-to-tr from-emerald-500 to-teal-500 text-white flex items-center justify-center shadow-lg shadow-emerald-200 border-2 border-white active:scale-95 transition-transform ${isNavigating ? "animate-pulse" : ""}`}>
@@ -129,12 +123,6 @@ export function BottomNav() {
               href={item.href}
               prefetch={true}
               onClick={() => {
-                if (pathname !== item.href) {
-                  setNavigatingTo(item.href);
-                  triggerGlobalLoader();
-                }
-              }}
-              onTouchStart={() => {
                 if (pathname !== item.href) {
                   setNavigatingTo(item.href);
                   triggerGlobalLoader();

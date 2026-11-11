@@ -69,7 +69,6 @@ export function NavigationProgress() {
 
     if (el) {
       el.style.opacity = "1";
-      el.style.pointerEvents = "auto";
     }
 
     if (bar) {
@@ -102,7 +101,6 @@ export function NavigationProgress() {
 
     if (el) {
       el.style.opacity = "0";
-      el.style.pointerEvents = "none";
     }
   }
 
@@ -117,11 +115,11 @@ export function NavigationProgress() {
         />
       </div>
 
-      {/* 2. Badge flottant avec Spinner au centre de l'écran (Impossible à rater) */}
+      {/* 2. Badge flottant avec Spinner au centre de l'écran (Toujours pointer-events-none pour ne jamais bloquer le clic) */}
       <div
         id="global-page-spinner"
-        style={{ opacity: 0, pointerEvents: "none" }}
-        className="fixed inset-0 z-[99998] flex items-center justify-center bg-black/10 backdrop-blur-[1px] transition-opacity duration-150"
+        style={{ opacity: 0 }}
+        className="fixed inset-0 z-[99998] pointer-events-none flex items-center justify-center bg-black/10 backdrop-blur-[1px] transition-opacity duration-150"
       >
         <div className="flex items-center gap-3 px-5 py-3.5 rounded-2xl bg-gray-950/95 text-white text-sm font-bold shadow-2xl border border-white/20">
           <svg
@@ -156,7 +154,6 @@ export function triggerGlobalLoader() {
   const bar = document.getElementById("global-page-bar");
   if (el) {
     el.style.opacity = "1";
-    el.style.pointerEvents = "auto";
   }
   if (bar) {
     bar.style.width = "75%";
