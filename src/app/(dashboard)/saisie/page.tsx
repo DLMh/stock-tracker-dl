@@ -10,7 +10,7 @@ import { prisma } from "@/lib/prisma";
 import { SaisieClient } from "./SaisieClient";
 
 // Revalidation fluide du catalogue de produits (mise à jour instantanée via revalidatePath)
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
 
 /** Charge tous les produits actifs avec leur chemin catégorie complet. */
 async function getProduits() {

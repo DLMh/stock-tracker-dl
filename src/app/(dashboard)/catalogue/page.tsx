@@ -6,7 +6,7 @@
 import { getCatalogueDataAction } from "./actions";
 import { CatalogueClient } from "./CatalogueClient";
 
-export const revalidate = 15;
+export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "Catalogue – Catégories & Produits",

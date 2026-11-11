@@ -6,7 +6,7 @@
 import { getHistoriqueAction, getProduitsAction } from "./actions";
 import { HistoriqueClient } from "./HistoriqueClient";
 
-export const revalidate = 10;
+export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "Historique des mouvements",
