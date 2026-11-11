@@ -80,6 +80,7 @@ export function BottomNav() {
               <Link
                 key={item.href}
                 href={item.href}
+                prefetch={true}
                 className="flex flex-col items-center justify-center text-xs font-semibold text-gray-700 active:opacity-80"
               >
                 {item.icon(isActive)}
@@ -92,6 +93,7 @@ export function BottomNav() {
             <Link
               key={item.href}
               href={item.href}
+              prefetch={true}
               className={`flex flex-col items-center justify-center py-1 transition-colors ${
                 isActive ? "text-indigo-600 font-bold" : "text-gray-400 hover:text-gray-600"
               }`}

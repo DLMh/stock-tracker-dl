@@ -15,9 +15,10 @@ export function Navbar() {
   const pathname = usePathname();
   const [user, setUser] = useState<SessionUser | null>(null);
 
+  // Charger la session une seule fois au montage (évite les requêtes serveur à chaque clic d'onglet)
   useEffect(() => {
     getSessionAction().then(setUser);
-  }, [pathname]);
+  }, []);
 
   const navLinks = [
     { href: "/", label: "Tableau de bord" },
@@ -30,7 +31,7 @@ export function Navbar() {
     <header className="sticky top-0 z-40 w-full border-b border-gray-200 bg-white/95 backdrop-blur-md">
       <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between gap-3">
         {/* Logo & Marque */}
-        <Link href="/" className="flex items-center gap-2.5 group shrink-0">
+        <Link href="/" prefetch={true} className="flex items-center gap-2.5 group shrink-0">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-indigo-100 group-hover:scale-105 transition-transform">
             <svg
               className="w-5 h-5"
@@ -60,6 +61,7 @@ export function Navbar() {
               <Link
                 key={link.href}
                 href={link.href}
+                prefetch={true}
                 className={`px-3 py-2 rounded-xl text-sm font-medium transition-all ${
                   isActive
                     ? "bg-indigo-50 text-indigo-700 font-semibold"
