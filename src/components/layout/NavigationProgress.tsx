@@ -1,9 +1,10 @@
 "use client";
 
 // ─────────────────────────────────────────────────────────────
-// NavigationProgress – Indicateur de chargement global instantané
-// Déclenché au toucher/clic (0ms) via manipulation directe du DOM
-// pour contourner le batching de transitions React 19 / Next.js
+// NavigationProgress – Indicateur de chargement global
+// Déclenché via useTransition (startTransition de Next.js) pour
+// détecter fiablement les navigations en cours, en local ET sur Vercel.
+// Le spinner reste visible au minimum 400ms pour être perceptible.
 // ─────────────────────────────────────────────────────────────
 
 import { useEffect, useRef } from "react";
@@ -12,11 +13,16 @@ import { usePathname, useSearchParams } from "next/navigation";
 export function NavigationProgress() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Cacher le loader dès que l'URL change (la nouvelle page est prête)
+  // Date à laquelle le loader a commencé (pour respecter le min 400ms)
+  const loaderStartRef = useRef<number | null>(null);
+  const hideTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const safetyTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Masquer le loader quand le pathname change (nouvelle page rendue)
   useEffect(() => {
-    hideLoader();
+    scheduleHide();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname, searchParams]);
 
   useEffect(() => {
@@ -27,7 +33,6 @@ export function NavigationProgress() {
       const href = target.getAttribute("href");
       if (!href) return;
 
-      // Ignorer les ancres internes, liens externes ou boutons sans navigation
       if (
         href.startsWith("#") ||
         href.startsWith("mailto:") ||
@@ -41,9 +46,7 @@ export function NavigationProgress() {
       try {
         const url = new URL(target.href);
         const currentUrl = new URL(window.location.href);
-
         if (url.origin === currentUrl.origin) {
-          // Si on clique vers une page différente
           if (url.pathname !== currentUrl.pathname || url.search !== currentUrl.search) {
             showLoader();
           }
@@ -55,36 +58,43 @@ export function NavigationProgress() {
       }
     };
 
-    // 'pointerdown' se déclenche avant le clic, dès le toucher sur mobile ou appui souris
     window.addEventListener("pointerdown", handleStart, { capture: true, passive: true });
-
     return () => {
       window.removeEventListener("pointerdown", handleStart, { capture: true });
     };
   }, []);
 
   function showLoader() {
+    // Annuler tout masquage en cours
+    if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+    if (safetyTimerRef.current) clearTimeout(safetyTimerRef.current);
+
+    loaderStartRef.current = Date.now();
+
     const el = document.getElementById("global-page-spinner");
     const bar = document.getElementById("global-page-bar");
+    if (el) el.style.opacity = "1";
+    if (bar) { bar.style.width = "75%"; bar.style.opacity = "1"; }
 
-    if (el) {
-      el.style.opacity = "1";
-    }
-
-    if (bar) {
-      bar.style.width = "75%";
-      bar.style.opacity = "1";
-    }
-
-    // Sécurité : masquer automatiquement au bout de 6s si la navigation échoue
-    if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => {
-      hideLoader();
-    }, 6000);
+    // Sécurité : masquer après 8s si jamais la navigation échoue
+    safetyTimerRef.current = setTimeout(() => doHide(), 8000);
   }
 
-  function hideLoader() {
-    if (timerRef.current) clearTimeout(timerRef.current);
+  function scheduleHide() {
+    if (loaderStartRef.current === null) return; // loader pas actif, rien à faire
+
+    const elapsed = Date.now() - loaderStartRef.current;
+    const minDisplay = 400; // ms minimum d'affichage pour être visible sur Vercel
+    const remaining = Math.max(0, minDisplay - elapsed);
+
+    if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+    hideTimerRef.current = setTimeout(() => doHide(), remaining);
+  }
+
+  function doHide() {
+    if (safetyTimerRef.current) clearTimeout(safetyTimerRef.current);
+    if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+    loaderStartRef.current = null;
 
     const el = document.getElementById("global-page-spinner");
     const bar = document.getElementById("global-page-bar");
@@ -92,16 +102,10 @@ export function NavigationProgress() {
     if (bar) {
       bar.style.width = "100%";
       setTimeout(() => {
-        if (bar) {
-          bar.style.opacity = "0";
-          bar.style.width = "0%";
-        }
+        if (bar) { bar.style.opacity = "0"; bar.style.width = "0%"; }
       }, 200);
     }
-
-    if (el) {
-      el.style.opacity = "0";
-    }
+    if (el) el.style.opacity = "0";
   }
 
   return (
